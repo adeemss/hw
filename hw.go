@@ -9,7 +9,7 @@ func main() {
 	fmt.Println("hw#1")
 	c := make(chan any)
 
-	cOut := doBatching(c, 1)
+	cOut := doBatching(c, 2)
 
 	go func() {
 		for i := 1; i <= 10; i++ {
