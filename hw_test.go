@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func DoBatching(b *testing.B) {
+func BenchmarkDoBatching(b *testing.B) {
 	c := make(chan any, b.N)
 
 	go func() {
