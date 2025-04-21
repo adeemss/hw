@@ -43,3 +43,28 @@ func doBatching(c chan any, batchSize int) chan []any {
 	}()
 	return resp
 }
+// case just for me w select
+func doB(d chan any, batchSize int) chan []any {
+	resp := make(chan []any)
+	var batch []any
+	go func() {
+		defer close(resp)
+		for {
+			select {
+			case val, ok := <-d:
+				if !ok {
+					if len(batch) > 0 {
+						resp <- batch
+					}
+					return
+				}
+				if len(batch) == batchSize {
+					resp <- batch
+					batch = nil
+				}
+				batch = append(batch, val)
+			}
+		}
+	}()
+	return resp
+}
