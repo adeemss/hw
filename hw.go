@@ -23,6 +23,24 @@ func main() {
 	for i := range cOut {
 		fmt.Println(i) // [1,2] [3,4]
 	}
+
+
+	
+	d := make(chan any)
+	dOut := doB(d, 3)
+	go func() {
+		for i := 1; i <= 10; i++ {
+			d <- i
+			fmt.Println("vvela: ", i)
+			time.Sleep(300 * time.Millisecond)
+		}
+		close(d)
+
+	}()
+	for di := range dOut {
+		fmt.Println("dddd", di)
+	}
+	
 }
 func doBatching(c chan any, batchSize int) chan []any {
 	resp := make(chan []any)
