@@ -1,73 +1,25 @@
-func (p *Provider) GetCacheStoragePeriodByResponseID(ctx context.Context, respID string) (*int, error) {
-	var err error
-	var cachePeriod *int
-	log := p.Logger.New(ctx)
-
-	resp, err := p.DBClient.GetResponseByID(respID)
-	if err != nil {
-		if err == srvErrs.ErrNotFound {
-			return nil, err
-		}
-		log.Errorf("failed to get request by response ID from DB, %s", err.Error())
-		return nil, fmt.Errorf("failed to get request by response ID from DB, %w", err)
-	}
-	cachePeriod, err = p.GetCacheStoragePeriodByRequestID(ctx, *resp.RequestID)
-	if err != nil {
-		log.Errorf("failed to get cache storage period by request ID from DB, %s", err.Error())
-		return nil, fmt.Errorf("failed to get cache storage period by request ID from DB, %w", err)
-	}
-	return cachePeriod, nil
-}
-func TestGetCacheStoragePeriodByResponseID(t *testing.T) {
-	respID := "7b0e0d62-697c-4e57-88fb-884b91bcd4d6"
-	expectedResponse := &bDTO.Response{
-		RequestID: converter.Pointer("3759c05e-1596-4c3e-91e7-8db82ad20239"),
-	}
-	testCases := map[string]struct {
-		contextSetup  func() context.Context
-		loggerSetup   func(ctx context.Context, log *lMock.MockContextLogger)
-		dbClientSetup func(cl *cMock.DBClientMock)
-		ExpRes        *int
-		expError      error
-	}{
-		"success": {
+"failed: invalid ID": {
 			contextSetup: func() context.Context {
 				return context.Background()
 			},
+			storeProviderSetup: func(ctx context.Context, sp *sMock.StoreServiceMock) {},
 			loggerSetup: func(ctx context.Context, log *lMock.MockContextLogger) {
 				log.On("New", ctx).Return(log)
+				log.On("Errorf", "failed to validate response body, %s", []interface{}{"Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag"})
 			},
-
-			dbClientSetup: func(cl *cMock.DBClientMock) {
-				cl.On("GetResponseByID", mock.MatchedBy(func(responseID string) bool {
-					return assert.Equal(t, respID, responseID)
-				})).Return(expectedResponse, nil)
+			inputSetup: func(data bDTO.Response) *bDTO.Response {
+				data.ID = converter.Pointer("invalid_uuid")
+				return &data
 			},
-			ExpRes: converter.Pointer(1),
+			expError: fmt.Errorf("failed to validate response body, %s", "Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag"),
 		},
-	}
+Error:      	Not equal: 
+        	            	expected: *errors.errorString(&errors.errorString{s:"failed to validate response body, Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag"})
+        	            	actual  : *fmt.wrapError(&fmt.wrapError{msg:"failed to validate response body, Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag", err:validator.ValidationErrors{(*validator.fieldError)(0xc00014e6c0)}})
+        	Test:       	TestSaveResponseBody/failed:_invalid_ID
+--- FAIL: TestSaveResponseBody/failed:_invalid_ID (0.00s)
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			log := &lMock.MockContextLogger{}
-			cl := cMock.NewDBClientMock(t)
-			ctx := tc.contextSetup()
-			tc.loggerSetup(ctx, log)
-			tc.dbClientSetup(cl)
+Expected :*errors.errorString(&errors.errorString{s:"failed to validate response body, Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag"})
+Actual   :*fmt.wrapError(&fmt.wrapError{msg:"failed to validate response body, Key: 'respBodyValidator.ID' Error:Field validation for 'ID' failed on the 'uuid' tag", err:validator.ValidationErrors{(*validator.fieldError)(0xc00014e6c0)}})
 
-			sp := Provider{
-				Logger:   log,
-				DBClient: cl,
-			}
-
-			resp, err := sp.GetCacheStoragePeriodByResponseID(ctx, respID)
-			if err != nil {
-				assert.Equal(t, tc.expError, err)
-			}
-
-			assert.Equal(t, resp, tc.ExpRes)
-
-			mock.AssertExpectationsForObjects(t, cl, log)
-		})
-	}
-}
+как пофиксить 
