@@ -1,8 +1,1 @@
-корочи по минио 
-GetBody функция 
-внутри функции метод GetObject который возвращает *minio.Object . кореша говорят следующее 
- 
-нельзя «засетапить» валидный *minio.Object чисто руками и без реального клиента/HTTP.
-У minio.Object закрытые поля и внутренняя логика чтения завязана на эти поля. Публичного конструктора нет.
-шо ж делать шо ж делать 
- 
+Cannot use 'm.cl.GetObject(ctx, bucketName, objectName, opts)' (type (*Object, error)) as the type *io.ReadCloser
